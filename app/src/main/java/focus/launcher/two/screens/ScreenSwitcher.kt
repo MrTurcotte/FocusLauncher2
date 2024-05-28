@@ -28,6 +28,10 @@ fun ScreenSwitcher(
     calViewModel: CalendarViewModel,
 ) {
 
+    LaunchedEffect(key1 = true) {
+        calViewModel.getCalendarInstances(context)
+    }
+
     val duration = 300
 
     NavHost(

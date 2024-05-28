@@ -5,9 +5,16 @@ import android.content.Context
 import android.net.Uri
 import android.provider.CalendarContract
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import focus.launcher.two.screens.Appointment
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -15,10 +22,19 @@ import java.util.Locale
 
 
 class CalendarViewModel : ViewModel() {
+    var calendarInstances = mutableStateListOf<Appointment>()
+    var calendarJob: Job? = null
 
-    private var appointments: MutableState<Map<Long, List<Appointment>>> = mutableStateOf(emptyMap())
+    fun getCalendarInstances(context: Context) {
+        calendarJob?.cancel()
+        calendarJob = getCalendarEvents(context).onEach {
+            calendarInstances.add(it)
+        }.launchIn(viewModelScope)
+    }
 
-    fun getCalendarEvents(context: Context): Map<Long, List<Appointment>> {
+    fun getCalendarEvents(context: Context): Flow<Appointment> {
+//            Map<Long, List<Appointment>> {
+        val tempList = mutableListOf<Appointment>()
         val projection = arrayOf(
             CalendarContract.Instances.EVENT_ID,
             CalendarContract.Instances.TITLE,
@@ -70,49 +86,54 @@ class CalendarViewModel : ViewModel() {
             val startDayIndex = cursor.getColumnIndex(CalendarContract.Instances.START_DAY)
             val colorIndex = cursor.getColumnIndex(CalendarContract.Instances.CALENDAR_COLOR)
 
-            val tempList = mutableListOf<Appointment>()
             val titleList: MutableList<String> = mutableListOf()
             val dateList: MutableList<Long> = mutableListOf()
 
             while (cursor.moveToNext()) {
-                val id = cursor.getLong(idIndex)
-                val title = cursor.getString(titleIndex) ?: "Unknown"
-                val startDate =
-                    if (cursor.getLong(startDateIndex) == cursor.getLong(endDateIndex)) {
-                        cursor.getLong(startDateIndex) + 86400000
-                    } else {
-                        cursor.getLong(startDateIndex)
-                    }
-                val endDate = if (cursor.getLong(endDateIndex) < startDate) {
-                    startDate
-                } else {
-                    cursor.getLong(endDateIndex)
-                }
-                val startDay = cursor.getInt(startDayIndex)
-                val color = cursor.getInt(colorIndex)
+                val isCancelled = cursor.getInt(CalendarContract.Instances.STATUS_CANCELED)
 
-                if (title in titleList && startDate in dateList) {
-                    titleList.add(title)
-                    dateList.add(startDate)
+                if (isCancelled == 1) {
+                    continue
                 } else {
-                    tempList.add(
-                        Appointment(
-                            id = id,
-                            title = title,
-                            timeStart = formatTime(startDate),
-                            timeEnd = formatTime(endDate),
-                            startDay = ((startDay.toFloat() - 2440587.5) * 86400000).toLong(),
-                            color = color
+
+                    val id = cursor.getLong(idIndex)
+                    val title = cursor.getString(titleIndex) ?: "Unknown"
+                    val startDate =
+                        if (cursor.getLong(startDateIndex) == cursor.getLong(endDateIndex)) {
+                            cursor.getLong(startDateIndex) + 86400000
+                        } else {
+                            cursor.getLong(startDateIndex)
+                        }
+                    val endDate = if (cursor.getLong(endDateIndex) < startDate) {
+                        startDate
+                    } else {
+                        cursor.getLong(endDateIndex)
+                    }
+                    val startDay = cursor.getInt(startDayIndex)
+                    val color = cursor.getInt(colorIndex)
+
+                    if (title in titleList && startDate in dateList) {
+                        titleList.add(title)
+                        dateList.add(startDate)
+                    } else {
+                        tempList.add(
+                            Appointment(
+                                id = id,
+                                title = title,
+                                timeStart = formatTime(startDate),
+                                timeEnd = formatTime(endDate),
+                                startDay = ((startDay.toFloat() - 2440587.5) * 86400000).toLong(),
+                                color = color
+                            )
                         )
-                    )
-                    titleList.add(title)
-                    dateList.add(startDate)
+                        titleList.add(title)
+                        dateList.add(startDate)
+                    }
                 }
             }
 
-            appointments = mutableStateOf(tempList.groupBy { it.startDay }.toSortedMap())
         }
-        return appointments.value
+        return tempList.asFlow()
     }
 
 

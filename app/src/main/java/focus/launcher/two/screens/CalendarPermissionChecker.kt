@@ -66,13 +66,6 @@ fun CalendarPermissionChecker(
         )
     }
 
-    val receiver = FocusBroadcastReceiver(viewModel)
-    context.registerReceiver(receiver, IntentFilter().apply {
-        addAction(Intent.ACTION_PACKAGE_ADDED)
-        addAction(Intent.ACTION_PACKAGE_REMOVED)
-        addDataScheme("package")
-    })
-
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -92,6 +85,13 @@ fun CalendarPermissionChecker(
     ) {
         val calendarViewModel = CalendarViewModel()
         val navController: NavHostController = rememberNavController()
+
+        val receiver = FocusBroadcastReceiver(viewModel, calendarViewModel, context)
+        context.registerReceiver(receiver, IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+        })
 
         Surface(
             modifier = Modifier.fillMaxSize(),

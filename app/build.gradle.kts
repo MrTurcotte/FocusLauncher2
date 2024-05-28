@@ -18,7 +18,7 @@ android {
         applicationId = "focus.launcher.two"
         minSdk = 28
         targetSdk = 34
-        versionCode = 4
+        versionCode = 5
         versionName = "2024.03.08"
         multiDexEnabled = true
 

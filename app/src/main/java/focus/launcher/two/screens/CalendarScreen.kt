@@ -61,6 +61,11 @@ fun CalendarAgenda(
 ) {
     val context = LocalContext.current
 
+//    LaunchedEffect(key1 = true) {
+//        calendarViewModel.getCalendarInstances(context)
+//
+//    }
+
     BackHandler(
         true,
         onBack = {
@@ -68,14 +73,16 @@ fun CalendarAgenda(
         }
     )
 
-    val appointments = calendarViewModel.getCalendarEvents(context)
+    val appointments = calendarViewModel.calendarInstances
+    val sortedAppointments = appointments.groupBy { it.startDay }.toSortedMap()
+
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        appointments.forEach { (date, appointment) ->
+        sortedAppointments.forEach { (date, appointment) ->
             stickyHeader {
                 CalendarHeader(date)
             }

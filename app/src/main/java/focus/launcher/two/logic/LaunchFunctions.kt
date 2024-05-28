@@ -53,6 +53,7 @@ fun Maps() {
             .clickable {
                 val locationUri = "geo:0,0?q="
                 val intent = Intent(Intent.ACTION_VIEW, locationUri.toUri())
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
             }
     )
@@ -69,6 +70,7 @@ fun PhotoApp() {
             .clickable {
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.type = "image/*"
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
             }
     )
@@ -84,6 +86,7 @@ fun ContactText() {
             .clickable {
                 val contactsIntent =
                     Intent(Intent.ACTION_VIEW, ContactsContract.Contacts.CONTENT_URI)
+                contactsIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(contactsIntent)
             }
     )
@@ -99,6 +102,7 @@ fun CameraText() {
             .padding(8.dp)
             .clickable {
                 val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                cameraIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(cameraIntent)
             }
     )
@@ -125,6 +129,7 @@ fun ClockText() {
             .padding(8.dp)
             .clickable {
                 val clockIntent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
+                clockIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(clockIntent)
             },
         fontSize = 60.sp
